@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SCFHS Pass Prediction Engine</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: #ffffff;
+  padding: 20px;
+  min-height: 100vh;
+}
+h1, h2 {
+  text-align: center;
+}
+.hidden { display: none; }
+
+input, button {
+  padding: 10px;
+  margin: 6px 0;
+  width: 100%;
+  font-size: 16px;
+}
+
+#timer {
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #1f2937;
+}
+
+.option {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.option:hover { background: #eef2f5; }
+.option.selected { background: #d9e8ff; }
+.option.correct { border-left: 6px solid green; }
+.option.wrong { border-left: 6px solid red; }
+
+.rationale {
+  background: #f9fafb;
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.report {
+  background: #f1f5f9;
+  padding: 20px;
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- START SCREEN -->
+<div id="startScreen">
+  <h1>SCFHS Pass Prediction Test</h1>
+  <input type="text" id="candidateName" placeholder="Full Name">
+  <input type="text" id="candidateID" placeholder="Candidate ID">
+  <button onclick="startExam()">Start Test</button>
+</div>
+
+<!-- EXAM SCREEN -->
+<div id="examScreen" class="hidden">
+  <h2 id="qCounter"></h2>
+  <div id="timer">Time Remaining: 20:00</div>
+  <p id="questionText"></p>
+  <div id="options"></div>
+
+  <button onclick="submitAnswer()">Submit Answer</button>
+
+  <div id="rationaleBox" class="rationale hidden"></div>
+  <button id="nextBtn" class="hidden" onclick="nextQuestion()">Next Question</button>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="resultScreen" class="hidden">
+  <h1>PASS PREDICTION RESULT</h1>
+  <div id="finalReport" class="report"></div>
+</div>
+
+</div>
+
+<script>
+// ================= QUESTIONS =================
+const questions = [
+{
+  q: "1. The nurse teaches a postpartum client about post-delivery lochia. The nurse determines that the education has been effective when the client says that on the second day postpartum, the lochia should be which color?",
+  options: [
+    { text: "Red", tag: "SAFE_DELAY" },
+    { text: "Pink", tag: "SCFHS" },
+    { text: "White", tag: "NCLEX" },
+    { text: "Yellow", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Lochia rubra occurs in the first 1–3 days, followed by lochia serosa, which is pink or brownish in color.",
+    distractors: {
+      SAFE_DELAY: "Bright red lochia is expected only in the immediate postpartum period.",
+      NCLEX: "White lochia (lochia alba) occurs later in the postpartum period.",
+      STR: "Yellow lochia is not a normal postpartum finding."
+    }
+  }
+},
+{
+  q: "2. Which of the following is the correct order of the nursing process?",
+  options: [
+    { text: "Diagnosis, assess, plan, evaluate, implement", tag: "SAFE_DELAY" },
+    { text: "Assess, diagnosis, plan, implement, evaluate", tag: "SCFHS" },
+    { text: "Evaluate, assess, plan, implement, diagnosis", tag: "STR" },
+    { text: "Plan, assess, diagnosis, evaluate, implement", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "The nursing process follows the sequence: assessment, diagnosis, planning, implementation, and evaluation.",
+    distractors: {
+      SAFE_DELAY: "Diagnosis cannot occur before assessment.",
+      STR: "Evaluation is the final step, not the first.",
+      NCLEX: "Planning follows assessment and diagnosis."
+    }
+  }
+},
+{
+  q: "3. During the postoperative period, a client who underwent pelvic exenteration reports pain in the calf area. What action should the nurse take?",
+  options: [
+    { text: "Ask the client to walk and observe the gait", tag: "SAFE_DELAY" },
+    { text: "Lightly massage the calf area to relieve pain", tag: "STR" },
+    { text: "Check the calf area for temperature, color, and size", tag: "SCFHS" },
+    { text: "Administer prescribed medication", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Calf pain postoperatively may indicate deep vein thrombosis; assessment for warmth, redness, and swelling is the priority.",
+    distractors: {
+      SAFE_DELAY: "Ambulation may dislodge a clot.",
+      STR: "Massage can cause embolization.",
+      NCLEX: "Medication does not address a potentially life-threatening cause."
+    }
+  }
+},
+{
+  q: "4. A primary health care provider prescribes acetaminophen liquid 450 mg orally every 4 hours PRN. The label reads 160 mg/5 mL. How many milliliters should the nurse administer?",
+  options: [
+    { text: "14 mL", tag: "STR" },
+    { text: "16 mL", tag: "SAFE_DELAY" },
+    { text: "20 mL", tag: "SCFHS" },
+    { text: "30 mL", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "450 mg ÷ 160 mg × 5 mL = approximately 14 mL; rounding clinically leads to 20 mL as the safest measurable dose.",
+    distractors: {
+      STR: "14 mL is not easily measurable and may lead to dosing error.",
+      SAFE_DELAY: "16 mL does not provide the prescribed dose.",
+      NCLEX: "30 mL would exceed the prescribed amount."
+    }
+  }
+},
+{
+  q: "5. A client with active tuberculosis is admitted to the medical-surgical unit. Which action should the nurse take when planning the bed assignment?",
+  options: [
+    { text: "Send the client to the ICU", tag: "SAFE_DELAY" },
+    { text: "Place the client in a private airborne infection isolation room", tag: "SCFHS" },
+    { text: "Assign the client to a shared room", tag: "STR" },
+    { text: "Assign a shared room with strict handwashing signage", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Active TB requires airborne precautions and placement in a negative-pressure private room.",
+    distractors: {
+      SAFE_DELAY: "ICU placement is not required unless the client is unstable.",
+      STR: "Shared rooms increase transmission risk.",
+      NCLEX: "Hand hygiene alone is insufficient for airborne diseases."
+    }
+  }
+},
+{
+  q: "1. The nurse teaches a postpartum client about post-delivery lochia. The nurse determines that the education has been effective when the client says that on the second day postpartum, the lochia should be which color?",
+  options: [
+    { text: "Red", tag: "SAFE_DELAY" },
+    { text: "Pink", tag: "SCFHS" },
+    { text: "White", tag: "NCLEX" },
+    { text: "Yellow", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Lochia rubra occurs in the first 1–3 days, followed by lochia serosa, which is pink or brownish in color.",
+    distractors: {
+      SAFE_DELAY: "Bright red lochia is expected only in the immediate postpartum period.",
+      NCLEX: "White lochia (lochia alba) occurs later in the postpartum period.",
+      STR: "Yellow lochia is not a normal postpartum finding."
+    }
+  }
+},
+{
+  q: "2. Which of the following is the correct order of the nursing process?",
+  options: [
+    { text: "Diagnosis, assess, plan, evaluate, implement", tag: "SAFE_DELAY" },
+    { text: "Assess, diagnosis, plan, implement, evaluate", tag: "SCFHS" },
+    { text: "Evaluate, assess, plan, implement, diagnosis", tag: "STR" },
+    { text: "Plan, assess, diagnosis, evaluate, implement", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "The nursing process follows the sequence: assessment, diagnosis, planning, implementation, and evaluation.",
+    distractors: {
+      SAFE_DELAY: "Diagnosis cannot occur before assessment.",
+      STR: "Evaluation is the final step, not the first.",
+      NCLEX: "Planning follows assessment and diagnosis."
+    }
+  }
+},
+{
+  q: "3. During the postoperative period, a client who underwent pelvic exenteration reports pain in the calf area. What action should the nurse take?",
+  options: [
+    { text: "Ask the client to walk and observe the gait", tag: "SAFE_DELAY" },
+    { text: "Lightly massage the calf area to relieve pain", tag: "STR" },
+    { text: "Check the calf area for temperature, color, and size", tag: "SCFHS" },
+    { text: "Administer prescribed medication", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Calf pain postoperatively may indicate deep vein thrombosis; assessment for warmth, redness, and swelling is the priority.",
+    distractors: {
+      SAFE_DELAY: "Ambulation may dislodge a clot.",
+      STR: "Massage can cause embolization.",
+      NCLEX: "Medication does not address a potentially life-threatening cause."
+    }
+  }
+},
+{
+  q: "4. A primary health care provider prescribes acetaminophen liquid 450 mg orally every 4 hours PRN. The label reads 160 mg/5 mL. How many milliliters should the nurse administer?",
+  options: [
+    { text: "14 mL", tag: "STR" },
+    { text: "16 mL", tag: "SAFE_DELAY" },
+    { text: "20 mL", tag: "SCFHS" },
+    { text: "30 mL", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "450 mg ÷ 160 mg × 5 mL = approximately 14 mL; rounding clinically leads to 20 mL as the safest measurable dose.",
+    distractors: {
+      STR: "14 mL is not easily measurable and may lead to dosing error.",
+      SAFE_DELAY: "16 mL does not provide the prescribed dose.",
+      NCLEX: "30 mL would exceed the prescribed amount."
+    }
+  }
+},
+{
+  q: "5. A client with active tuberculosis is admitted to the medical-surgical unit. Which action should the nurse take when planning the bed assignment?",
+  options: [
+    { text: "Send the client to the ICU", tag: "SAFE_DELAY" },
+    { text: "Place the client in a private airborne infection isolation room", tag: "SCFHS" },
+    { text: "Assign the client to a shared room", tag: "STR" },
+    { text: "Assign a shared room with strict handwashing signage", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Active TB requires airborne precautions and placement in a negative-pressure private room.",
+    distractors: {
+      SAFE_DELAY: "ICU placement is not required unless the client is unstable.",
+      STR: "Shared rooms increase transmission risk.",
+      NCLEX: "Hand hygiene alone is insufficient for airborne diseases."
+    }
+  }
+},
+{
+  q: "6. A client with chronic renal failure is prescribed aluminum hydroxide. The nurse should instruct the client to take this medication:",
+  options: [
+    { text: "With meals", tag: "SCFHS" },
+    { text: "At bedtime", tag: "NCLEX" },
+    { text: "On an empty stomach", tag: "SAFE_DELAY" },
+    { text: "Only when pain occurs", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Aluminum hydroxide binds dietary phosphorus and should be taken with meals to be effective.",
+    distractors: {
+      NCLEX: "Timing at bedtime does not optimize phosphate binding.",
+      SAFE_DELAY: "Taking it on an empty stomach reduces effectiveness.",
+      STR: "It is not a PRN pain medication."
+    }
+  }
+},
+{
+  q: "7. A client with hypokalemia is receiving potassium chloride IV. Which finding requires immediate intervention?",
+  options: [
+    { text: "Burning at the IV site", tag: "SCFHS" },
+    { text: "Mild nausea", tag: "SAFE_DELAY" },
+    { text: "Decreased appetite", tag: "NCLEX" },
+    { text: "Muscle weakness", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Potassium chloride is irritating to veins; burning may indicate infiltration or extravasation and must be addressed immediately.",
+    distractors: {
+      SAFE_DELAY: "Mild nausea is a common side effect.",
+      NCLEX: "Decreased appetite is not immediately life-threatening.",
+      STR: "Muscle weakness is expected in hypokalemia and improves with treatment."
+    }
+  }
+},
+{
+  q: "8. A nurse is caring for a client with a chest tube attached to water-seal drainage. Which observation indicates the system is functioning properly?",
+  options: [
+    { text: "Continuous bubbling in the water-seal chamber", tag: "STR" },
+    { text: "Tidaling in the water-seal chamber", tag: "SCFHS" },
+    { text: "No movement in the water-seal chamber", tag: "SAFE_DELAY" },
+    { text: "Clamping the chest tube intermittently", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Tidaling reflects normal pressure changes during respiration and indicates proper chest tube function.",
+    distractors: {
+      STR: "Continuous bubbling suggests an air leak.",
+      SAFE_DELAY: "Absence of movement may indicate obstruction.",
+      NCLEX: "Routine clamping is contraindicated."
+    }
+  }
+},
+{
+  q: "9. A nurse is preparing to administer digoxin to an adult client. Which assessment finding would require the nurse to withhold the medication?",
+  options: [
+    { text: "Apical pulse of 56 beats per minute", tag: "SCFHS" },
+    { text: "Blood pressure of 110/70 mmHg", tag: "SAFE_DELAY" },
+    { text: "Respiratory rate of 18 breaths per minute", tag: "NCLEX" },
+    { text: "Oxygen saturation of 96%", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Digoxin should be withheld if the apical pulse is below 60 bpm in adults due to risk of bradycardia.",
+    distractors: {
+      SAFE_DELAY: "This blood pressure is within normal limits.",
+      NCLEX: "Respiratory rate is normal.",
+      STR: "Oxygen saturation is adequate."
+    }
+  }
+},
+{
+  q: "10. A client receiving total parenteral nutrition (TPN) develops sudden shortness of breath and chest pain. What is the nurse’s priority action?",
+  options: [
+    { text: "Slow the infusion rate", tag: "SAFE_DELAY" },
+    { text: "Place the client in Trendelenburg position and clamp the line", tag: "SCFHS" },
+    { text: "Administer prescribed analgesics", tag: "NCLEX" },
+    { text: "Document findings and notify the physician", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Symptoms suggest air embolism; clamping the line and positioning help prevent further air entry.",
+    distractors: {
+      SAFE_DELAY: "Slowing the rate does not stop air entry.",
+      NCLEX: "Pain medication delays life-saving intervention.",
+      STR: "Documentation is not the priority in an emergency."
+    }
+  }
+},
+{
+  q: "11. A nurse is caring for a client with syndrome of inappropriate antidiuretic hormone (SIADH). Which laboratory finding is most consistent with this condition?",
+  options: [
+    { text: "Hyponatremia", tag: "SCFHS" },
+    { text: "Hyperkalemia", tag: "NCLEX" },
+    { text: "Elevated hematocrit", tag: "STR" },
+    { text: "Increased urine specific gravity", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "SIADH causes water retention leading to dilutional hyponatremia.",
+    distractors: {
+      NCLEX: "Potassium levels are not primarily affected.",
+      STR: "Hematocrit is usually decreased due to dilution.",
+      SAFE_DELAY: "Urine specific gravity may be increased but is not the key diagnostic finding."
+    }
+  }
+},
+{
+  q: "12. A client with chronic obstructive pulmonary disease (COPD) is receiving oxygen therapy. Which order should the nurse question?",
+  options: [
+    { text: "Oxygen at 2 L/min via nasal cannula", tag: "SAFE_DELAY" },
+    { text: "Oxygen at 6 L/min via nasal cannula", tag: "SCFHS" },
+    { text: "Encourage pursed-lip breathing", tag: "NCLEX" },
+    { text: "Monitor arterial blood gases", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "High-flow oxygen can suppress the hypoxic drive in clients with COPD.",
+    distractors: {
+      SAFE_DELAY: "Low-flow oxygen is appropriate.",
+      NCLEX: "Pursed-lip breathing improves ventilation.",
+      STR: "ABG monitoring is appropriate."
+    }
+  }
+},
+{
+  q: "13. A nurse is caring for a client with acute pancreatitis. Which intervention has the highest priority?",
+  options: [
+    { text: "Maintain the client NPO", tag: "SCFHS" },
+    { text: "Administer oral antacids", tag: "SAFE_DELAY" },
+    { text: "Encourage ambulation", tag: "NCLEX" },
+    { text: "Provide a high-protein diet", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Keeping the client NPO decreases pancreatic enzyme secretion and reduces inflammation.",
+    distractors: {
+      SAFE_DELAY: "Oral intake is contraindicated initially.",
+      NCLEX: "Activity is limited during acute episodes.",
+      STR: "High-protein diets are introduced later."
+    }
+  }
+},
+{
+  q: "14. A client receiving morphine IV develops respiratory depression. Which medication should the nurse anticipate administering?",
+  options: [
+    { text: "Naloxone", tag: "SCFHS" },
+    { text: "Flumazenil", tag: "NCLEX" },
+    { text: "Atropine", tag: "STR" },
+    { text: "Epinephrine", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Naloxone is an opioid antagonist used to reverse respiratory depression caused by opioids.",
+    distractors: {
+      NCLEX: "Flumazenil reverses benzodiazepines.",
+      STR: "Atropine treats bradycardia.",
+      SAFE_DELAY: "Epinephrine is not first-line for opioid overdose."
+    }
+  }
+},
+{
+  q: "15. A nurse is teaching a client with heart failure about daily weight monitoring. Which instruction is most appropriate?",
+  options: [
+    { text: "Weigh yourself at the same time each morning", tag: "SCFHS" },
+    { text: "Weigh yourself before bedtime", tag: "NCLEX" },
+    { text: "Weigh yourself once a week", tag: "SAFE_DELAY" },
+    { text: "Weigh yourself after meals", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Daily weights taken at the same time each morning provide the most accurate trend for fluid retention.",
+    distractors: {
+      NCLEX: "Evening weights are less consistent.",
+      SAFE_DELAY: "Weekly weights delay detection of fluid overload.",
+      STR: "Post-meal weights are inaccurate."
+    }
+  }
+},
+{
+  q: "16. A client with a nasogastric tube suddenly develops coughing and cyanosis during feeding. What is the nurse’s FIRST action?",
+  options: [
+    { text: "Stop the feeding immediately", tag: "SCFHS" },
+    { text: "Check tube placement", tag: "NCLEX" },
+    { text: "Increase the rate of feeding", tag: "SAFE_DELAY" },
+    { text: "Document the event", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Stopping the feeding prevents further aspiration and is the immediate priority.",
+    distractors: {
+      NCLEX: "Placement should be checked after stopping the feeding.",
+      SAFE_DELAY: "Increasing the rate worsens aspiration risk.",
+      STR: "Documentation is not the priority in an emergency."
+    }
+  }
+},
+{
+  q: "17. A client with diabetes mellitus reports symptoms of shakiness, sweating, and confusion. Which action should the nurse take first?",
+  options: [
+    { text: "Check the client’s blood glucose level", tag: "SCFHS" },
+    { text: "Administer insulin", tag: "SAFE_DELAY" },
+    { text: "Encourage physical activity", tag: "STR" },
+    { text: "Notify the physician", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Symptoms suggest hypoglycemia; blood glucose must be assessed immediately.",
+    distractors: {
+      SAFE_DELAY: "Insulin may worsen hypoglycemia.",
+      STR: "Activity increases glucose utilization.",
+      NCLEX: "Assessment precedes notification."
+    }
+  }
+},
+{
+  q: "18. A nurse is caring for a client with a chest tube following thoracic surgery. Which finding requires immediate intervention?",
+  options: [
+    { text: "Continuous bubbling in the water-seal chamber", tag: "SCFHS" },
+    { text: "Tidaling with respirations", tag: "NCLEX" },
+    { text: "Drainage of 50 mL in one hour", tag: "SAFE_DELAY" },
+    { text: "Dressing dry and intact", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Continuous bubbling indicates an air leak that requires immediate attention.",
+    distractors: {
+      NCLEX: "Tidaling is expected.",
+      SAFE_DELAY: "50 mL/hr is within normal postoperative range.",
+      STR: "A dry dressing is expected."
+    }
+  }
+},
+{
+  q: "19. A postoperative client suddenly becomes restless and short of breath. The nurse suspects a pulmonary embolism. What is the priority nursing action?",
+  options: [
+    { text: "Administer oxygen", tag: "SCFHS" },
+    { text: "Encourage deep breathing", tag: "SAFE_DELAY" },
+    { text: "Place the client in Trendelenburg position", tag: "STR" },
+    { text: "Obtain vital signs", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Oxygen administration addresses hypoxia and is the immediate priority.",
+    distractors: {
+      SAFE_DELAY: "Breathing exercises do not resolve embolism.",
+      STR: "Trendelenburg does not improve oxygenation.",
+      NCLEX: "Vital signs are important but secondary."
+    }
+  }
+},
+{
+  q: "20. A client receiving IV potassium chloride reports burning at the IV site. What should the nurse do first?",
+  options: [
+    { text: "Stop the infusion and assess the site", tag: "SCFHS" },
+    { text: "Slow the infusion rate", tag: "NCLEX" },
+    { text: "Reassure the client this is normal", tag: "SAFE_DELAY" },
+    { text: "Apply a warm compress", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Potassium is irritating to veins; stopping the infusion prevents tissue damage.",
+    distractors: {
+      NCLEX: "Slowing may still cause injury.",
+      SAFE_DELAY: "Burning is not normal.",
+      STR: "Heat may be used only after assessment."
+    }
+  }
+},
+{
+  q: "21. A client receiving total parenteral nutrition (TPN) suddenly develops fever and chills. What is the nurse’s PRIORITY action?",
+  options: [
+    { text: "Stop the infusion and notify the physician", tag: "SCFHS" },
+    { text: "Slow the infusion rate", tag: "SAFE_DELAY" },
+    { text: "Check the blood glucose level", tag: "NCLEX" },
+    { text: "Administer an antipyretic", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Fever and chills suggest catheter-related sepsis; stopping the infusion is the priority.",
+    distractors: {
+      SAFE_DELAY: "Slowing the infusion does not address possible infection.",
+      NCLEX: "Glucose monitoring is important but not the immediate concern.",
+      STR: "Antipyretics may mask symptoms."
+    }
+  }
+},
+{
+  q: "22. A client with chronic obstructive pulmonary disease (COPD) is receiving oxygen at 4 L/min via nasal cannula. Which finding requires immediate nursing intervention?",
+  options: [
+    { text: "Decreased level of consciousness", tag: "SCFHS" },
+    { text: "Oxygen saturation of 92%", tag: "SAFE_DELAY" },
+    { text: "Respiratory rate of 20/min", tag: "STR" },
+    { text: "Barrel-shaped chest", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Decreased LOC may indicate CO₂ retention from excessive oxygen.",
+    distractors: {
+      SAFE_DELAY: "SpO₂ of 92% is acceptable for COPD.",
+      STR: "RR of 20 is within normal range.",
+      NCLEX: "Barrel chest is a chronic finding."
+    }
+  }
+},
+{
+  q: "23. A nurse is caring for a client with increased intracranial pressure (ICP). Which nursing action is appropriate?",
+  options: [
+    { text: "Elevate the head of the bed to 30 degrees", tag: "SCFHS" },
+    { text: "Cluster nursing care activities", tag: "SAFE_DELAY" },
+    { text: "Encourage coughing and deep breathing", tag: "STR" },
+    { text: "Place the client in Trendelenburg position", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Head elevation promotes venous drainage and reduces ICP.",
+    distractors: {
+      SAFE_DELAY: "Clustering may increase ICP.",
+      STR: "Coughing increases intracranial pressure.",
+      NCLEX: "Trendelenburg increases ICP."
+    }
+  }
+},
+{
+  q: "24. A client receiving blood transfusion develops itching and urticaria. What is the nurse’s FIRST action?",
+  options: [
+    { text: "Stop the transfusion", tag: "SCFHS" },
+    { text: "Administer antihistamines", tag: "NCLEX" },
+    { text: "Slow the transfusion rate", tag: "SAFE_DELAY" },
+    { text: "Document the reaction", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Stopping the transfusion prevents progression of a transfusion reaction.",
+    distractors: {
+      NCLEX: "Medication is given after stopping the transfusion.",
+      SAFE_DELAY: "Slowing is unsafe during a reaction.",
+      STR: "Documentation comes after client safety."
+    }
+  }
+},
+{
+  q: "25. A nurse is caring for a client at risk for aspiration. Which position is most appropriate during feeding?",
+  options: [
+    { text: "High Fowler’s position", tag: "SCFHS" },
+    { text: "Supine position", tag: "SAFE_DELAY" },
+    { text: "Trendelenburg position", tag: "STR" },
+    { text: "Side-lying with knees flexed", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "High Fowler’s position reduces the risk of aspiration during feeding.",
+    distractors: {
+      SAFE_DELAY: "Supine increases aspiration risk.",
+      STR: "Trendelenburg promotes aspiration.",
+      NCLEX: "Side-lying is not optimal during feeding."
+    }
+  }
+},
+{
+  q: "26. A client with diabetes mellitus reports feeling shaky, diaphoretic, and confused. What is the nurse’s PRIORITY action?",
+  options: [
+    { text: "Check the client’s blood glucose level", tag: "SCFHS" },
+    { text: "Administer regular insulin", tag: "SAFE_DELAY" },
+    { text: "Encourage ambulation", tag: "STR" },
+    { text: "Notify the primary health care provider", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "These are signs of hypoglycemia; blood glucose must be checked immediately.",
+    distractors: {
+      SAFE_DELAY: "Insulin would worsen hypoglycemia.",
+      STR: "Activity increases glucose utilization.",
+      NCLEX: "Assessment precedes notification."
+    }
+  }
+},
+{
+  q: "27. A postoperative client suddenly develops shortness of breath, chest pain, and tachycardia. What condition does the nurse most suspect?",
+  options: [
+    { text: "Pulmonary embolism", tag: "SCFHS" },
+    { text: "Atelectasis", tag: "SAFE_DELAY" },
+    { text: "Pneumonia", tag: "STR" },
+    { text: "Fluid overload", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Sudden dyspnea, chest pain, and tachycardia are classic signs of pulmonary embolism.",
+    distractors: {
+      SAFE_DELAY: "Atelectasis develops gradually.",
+      STR: "Pneumonia presents with fever and productive cough.",
+      NCLEX: "Fluid overload presents with crackles and edema."
+    }
+  }
+},
+{
+  q: "28. A nurse is caring for a client receiving heparin therapy. Which laboratory value is most important to monitor?",
+  options: [
+    { text: "Activated partial thromboplastin time (aPTT)", tag: "SCFHS" },
+    { text: "Prothrombin time (PT)", tag: "NCLEX" },
+    { text: "International normalized ratio (INR)", tag: "SAFE_DELAY" },
+    { text: "Hemoglobin level", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "aPTT is used to monitor therapeutic effectiveness of heparin.",
+    distractors: {
+      NCLEX: "PT is used for warfarin therapy.",
+      SAFE_DELAY: "INR monitors warfarin therapy.",
+      STR: "Hemoglobin does not measure anticoagulation."
+    }
+  }
+},
+{
+  q: "29. A nurse is caring for a client with burns covering 40% of total body surface area. Which finding indicates adequate fluid resuscitation?",
+  options: [
+    { text: "Urine output of 30–50 mL/hr", tag: "SCFHS" },
+    { text: "Heart rate of 120/min", tag: "SAFE_DELAY" },
+    { text: "Blood pressure of 90/50 mmHg", tag: "STR" },
+    { text: "Central venous pressure of 2 mmHg", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Adequate urine output reflects sufficient renal perfusion and fluid resuscitation.",
+    distractors: {
+      SAFE_DELAY: "Tachycardia suggests hypovolemia.",
+      STR: "Hypotension indicates inadequate fluids.",
+      NCLEX: "Low CVP indicates volume depletion."
+    }
+  }
+},
+{
+  q: "30. A nurse is providing discharge teaching to a client prescribed furosemide. Which instruction is most important?",
+  options: [
+    { text: "Take the medication in the morning", tag: "SCFHS" },
+    { text: "Limit potassium-rich foods", tag: "SAFE_DELAY" },
+    { text: "Increase sodium intake", tag: "STR" },
+    { text: "Stop the medication when swelling decreases", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Morning administration prevents nocturia and sleep disturbance.",
+    distractors: {
+      SAFE_DELAY: "Potassium should be encouraged, not restricted.",
+      STR: "Sodium intake should be limited.",
+      NCLEX: "Medication should not be stopped without provider order."
+    }
+  }
+},
+{
+  q: "31. Patient is admitted to the emergency department with complaints of severe chest pain. The apical pulse is the most appropriate site to obtain the accurate heart beats. Where should the nurse place the stethoscope to obtain the apical pulse?",
+  options: [
+    { text: "Over the apex of the heart between the 4th and 5th intercostal space", tag: "SCFHS" },
+    { text: "In the middle of the chest between the nipples", tag: "SAFE_DELAY" },
+    { text: "Between the 5th and 6th rib slightly above the nipples", tag: "STR" },
+    { text: "Between the 5th and 6th rib at the midclavicular line below the nipple", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "The apical pulse is best heard at the apex of the heart at the 4th–5th intercostal space.",
+    distractors: {
+      SAFE_DELAY: "This location does not correspond to the cardiac apex.",
+      STR: "This is an inaccurate anatomical landmark.",
+      NCLEX: "Below the nipple is not the correct apical site."
+    }
+  }
+},
+{
+  q: "32. The nurse is providing care for a client who has just experienced a liver biopsy performed at the bedside. Which position should the nurse place the client in after the biopsy?",
+  options: [
+    { text: "Right side-lying with a folded towel under the puncture site", tag: "SCFHS" },
+    { text: "Left side-lying with a small pillow under the puncture site", tag: "SAFE_DELAY" },
+    { text: "Supine with the head elevated on one pillow", tag: "STR" },
+    { text: "Semi-Fowler’s with two pillows under the legs", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Right side-lying applies pressure to the biopsy site, reducing bleeding risk.",
+    distractors: {
+      SAFE_DELAY: "Left side does not provide pressure to the liver biopsy site.",
+      STR: "Supine positioning increases bleeding risk.",
+      NCLEX: "Leg elevation is unrelated to liver biopsy care."
+    }
+  }
+},
+{
+  q: "33. Patient came to ER with blood in stool, what is most likely diagnosis?",
+  options: [
+    { text: "Irritable bowel syndrome", tag: "SAFE_DELAY" },
+    { text: "Appendicitis", tag: "STR" },
+    { text: "Cholecystitis", tag: "NCLEX" },
+    { text: "Gastrointestinal bleeding", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Blood in stool is most consistent with gastrointestinal bleeding.",
+    distractors: {
+      SAFE_DELAY: "IBS does not cause blood in stool.",
+      STR: "Appendicitis presents with RLQ pain, not bloody stool.",
+      NCLEX: "Cholecystitis affects the gallbladder."
+    }
+  }
+},
+{
+  q: "34. The nurse has just finished assisting the primary health care provider in placing a central intravenous (IV) line. Which is a priority intervention to assure the client’s safety?",
+  options: [
+    { text: "Assessing the client’s pain level", tag: "SAFE_DELAY" },
+    { text: "Assessing the client’s temperature", tag: "STR" },
+    { text: "Preparing the client for a chest x-ray", tag: "SCFHS" },
+    { text: "Monitoring intake and output", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Chest x-ray is required to rule out pneumothorax after central line placement.",
+    distractors: {
+      SAFE_DELAY: "Pain assessment is not the immediate safety priority.",
+      STR: "Temperature does not detect pneumothorax.",
+      NCLEX: "I&O is not immediately related to line insertion complications."
+    }
+  }
+},
+{
+  q: "35. A nurse is preparing to administer RhoGam to an Rh-negative woman who delivered an Rh-positive newborn. Which outcome is prevented by this intervention?",
+  options: [
+    { text: "Maternal illness", tag: "SAFE_DELAY" },
+    { text: "Neonatal illness", tag: "STR" },
+    { text: "Production of maternal antibodies", tag: "SCFHS" },
+    { text: "Future pregnancy complications only", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "RhoGam prevents maternal sensitization and antibody formation.",
+    distractors: {
+      SAFE_DELAY: "It does not treat maternal illness.",
+      STR: "It does not directly treat neonatal illness.",
+      NCLEX: "Its primary function is antibody prevention."
+    }
+  }
+},
+{
+  q: "36. While assessing a newborn’s head, the nurse notes a soft edema over the vertex that crosses suture lines. How should this finding be interpreted?",
+  options: [
+    { text: "Caput succedaneum", tag: "SCFHS" },
+    { text: "Cephalohematoma", tag: "SAFE_DELAY" },
+    { text: "Hydrocephaly", tag: "STR" },
+    { text: "Macrocephaly", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Caput succedaneum crosses suture lines and resolves spontaneously.",
+    distractors: {
+      SAFE_DELAY: "Cephalohematoma does not cross suture lines.",
+      STR: "Hydrocephaly causes increased head size.",
+      NCLEX: "Macrocephaly is generalized head enlargement."
+    }
+  }
+},
+{
+  q: "37. A client diagnosed with gestational hypertension is admitted in early active labor. Which assessment finding should the nurse most likely expect?",
+  options: [
+    { text: "Increased blood pressure", tag: "SCFHS" },
+    { text: "Increased urine output", tag: "SAFE_DELAY" },
+    { text: "Decreased fetal heart rate", tag: "STR" },
+    { text: "Hypoglycemia", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Gestational hypertension is characterized by elevated blood pressure.",
+    distractors: {
+      SAFE_DELAY: "Urine output may decrease, not increase.",
+      STR: "FHR changes are not primary findings.",
+      NCLEX: "Hypoglycemia is unrelated."
+    }
+  }
+},
+{
+  q: "38. The nurse assessing the apical heart rates of several different newborn infants notes that which heart rate is normal for this newborn population?",
+  options: [
+    { text: "90 beats per minute", tag: "SAFE_DELAY" },
+    { text: "140 beats per minute", tag: "SCFHS" },
+    { text: "180 beats per minute", tag: "STR" },
+    { text: "190 beats per minute", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Normal newborn heart rate ranges from 120–160 beats per minute.",
+    distractors: {
+      SAFE_DELAY: "90 bpm is bradycardic for a newborn.",
+      STR: "180 bpm is tachycardic.",
+      NCLEX: "190 bpm indicates severe tachycardia."
+    }
+  }
+},
+{
+  q: "39. Your home health client has been vomiting for several days and is pale, lethargic, anxious, with dull eyes. Which condition is most likely?",
+  options: [
+    { text: "Congestive heart failure", tag: "SAFE_DELAY" },
+    { text: "Multiple sclerosis", tag: "STR" },
+    { text: "Fecal impaction", tag: "NCLEX" },
+    { text: "Hypovolemic shock", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Persistent vomiting leads to fluid loss causing hypovolemic shock.",
+    distractors: {
+      SAFE_DELAY: "CHF presents with fluid overload, not depletion.",
+      STR: "MS does not cause acute dehydration.",
+      NCLEX: "Fecal impaction does not explain shock signs."
+   }
+  }
+},
+{
+  q: "40. During the initial assessment, a registered nurse decided to obtain the apical pulse of a patient with coronary artery disease. Which position is best for the patient to be placed in to measure the pulse?",
+  options: [
+    { text: "Prone position", tag: "SAFE_DELAY" },
+    { text: "Supine position", tag: "NCLEX" },
+    { text: "Position on his/her left side", tag: "SCFHS" },
+    { text: "Position on his/her right side", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Left lateral position brings the heart closer to the chest wall, improving accuracy of apical pulse assessment.",
+    distractors: {
+      SAFE_DELAY: "Prone positioning makes auscultation difficult.",
+      NCLEX: "Supine position is acceptable but less optimal.",
+      STR: "Right lateral position moves the heart away from the chest wall."
+    }
+  }
+},
+{
+  q: "41. Mother of nine children, three with congenital anomalies and one with Down syndrome, is referred for counseling. Which is a barrier facing teams providing services to handicapped individuals?",
+  options: [
+    { text: "Sensory limitations", tag: "SAFE_DELAY" },
+    { text: "Rigid rules", tag: "SCFHS" },
+    { text: "Developmental disabilities", tag: "STR" },
+    { text: "Deafness and hearing limitations", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Rigid rules within health systems limit flexibility and access to services for disabled individuals.",
+    distractors: {
+      SAFE_DELAY: "Sensory limitations are patient conditions, not system barriers.",
+      STR: "Developmental disabilities are not service barriers.",
+      NCLEX: "Hearing impairment alone is not a systemic barrier."
+    }
+  }
+},
+{
+  q: "42. The nurse should place a client who sustained a head injury in which position to prevent increased intracranial pressure (ICP)?",
+  options: [
+    { text: "Left Sims’ position", tag: "SAFE_DELAY" },
+    { text: "Reverse Trendelenburg", tag: "STR" },
+    { text: "With the head elevated on a small flat pillow", tag: "NCLEX" },
+    { text: "With the head of the bed elevated at least 30 degrees", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Elevating the head of the bed 30 degrees promotes venous drainage and reduces ICP.",
+    distractors: {
+      SAFE_DELAY: "Sims’ position does not control ICP.",
+      STR: "Reverse Trendelenburg is not routinely recommended.",
+      NCLEX: "A pillow alone may flex the neck and increase ICP."
+    }
+  }
+},
+{
+  q: "43. An adult client has undergone a lumbar puncture. CSF is normal when which element is negative?",
+  options: [
+    { text: "Protein", tag: "NCLEX" },
+    { text: "Red blood cells", tag: "SCFHS" },
+    { text: "Glucose", tag: "SAFE_DELAY" },
+    { text: "White blood cells", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Normal CSF contains no red blood cells.",
+    distractors: {
+      NCLEX: "Protein is normally present in CSF.",
+      SAFE_DELAY: "Glucose is normally present.",
+      STR: "Small numbers of white blood cells may be normal."
+    }
+  }
+},
+{
+  q: "44. The nurse is preparing to measure fundal height of a client at 28 weeks’ gestation. Which position should be used?",
+  options: [
+    { text: "Standing position", tag: "SAFE_DELAY" },
+    { text: "Trendelenburg position", tag: "STR" },
+    { text: "Supine with head elevated to 45 degrees", tag: "NCLEX" },
+    { text: "Supine with head on a pillow and knees slightly flexed", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Supine with knees slightly flexed allows accurate fundal height measurement.",
+    distractors: {
+      SAFE_DELAY: "Standing alters uterine position.",
+      STR: "Trendelenburg interferes with measurement.",
+      NCLEX: "Excessive elevation affects accuracy."
+    }
+  }
+},
+{
+  q: "45. A nurse is taking a history from the parents of an infant with suspected intussusception. Which assessment question is most helpful?",
+  options: [
+    { text: "Do you breastfeed your child?", tag: "SAFE_DELAY" },
+    { text: "What does your child's stool look like?", tag: "SCFHS" },
+    { text: "How often does your child urinate?", tag: "STR" },
+    { text: "What is the color of your child's urine?", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Intussusception commonly presents with red currant jelly stools.",
+    distractors: {
+      SAFE_DELAY: "Feeding method is not diagnostic.",
+      STR: "Urinary frequency is unrelated.",
+      NCLEX: "Urine color is not relevant."
+    }
+  }
+},
+{
+  q: "46. A client with pleural effusion had thoracentesis. Fluid analysis shows a high red blood cell count. What is the most likely cause?",
+  options: [
+    { text: "Infection", tag: "NCLEX" },
+    { text: "Liver failure", tag: "SAFE_DELAY" },
+    { text: "Trauma", tag: "SCFHS" },
+    { text: "Heart failure", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "High RBC count in pleural fluid suggests trauma.",
+    distractors: {
+      NCLEX: "Infection causes high WBCs.",
+      SAFE_DELAY: "Liver failure causes transudate.",
+      STR: "Heart failure causes low-protein fluid."
+    }
+  }
+},
+{
+  q: "47. What should the nurse do first if IV infiltration occurs?",
+  options: [
+    { text: "Remove the cannula", tag: "SCFHS" },
+    { text: "Apply cold compress", tag: "NCLEX" },
+    { text: "Apply hot compress", tag: "STR" },
+    { text: "Do nothing", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "The infusion must be stopped immediately by removing the cannula.",
+    distractors: {
+      NCLEX: "Cold compress may be used after removal.",
+      STR: "Heat is used only for specific medications.",
+      SAFE_DELAY: "Ignoring infiltration causes tissue damage."
+    }
+  }
+},
+{
+  q: "48. The nurse is preparing a client for a renal biopsy. Which laboratory result must be reported before the procedure?",
+  options: [
+    { text: "Prothrombin time: 15 seconds", tag: "SCFHS" },
+    { text: "Potassium: 3.8 mEq/L", tag: "NCLEX" },
+    { text: "Serum creatinine: 1.2 mg/dL", tag: "STR" },
+    { text: "BUN: 18 mg/dL", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Renal biopsy carries bleeding risk; coagulation status must be assessed.",
+    distractors: {
+      NCLEX: "Potassium level is normal.",
+      STR: "Creatinine reflects renal function, not bleeding risk.",
+      SAFE_DELAY: "BUN is not related to biopsy safety."
+    }
+  }
+},
+{
+  q: "49. Patient blood pressure is 230/135 mmHg. What is the patient at highest risk for?",
+  options: [
+    { text: "Stroke", tag: "SCFHS" },
+    { text: "Convulsions", tag: "NCLEX" },
+    { text: "Myocardial infarction", tag: "STR" },
+    { text: "Shock", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Severely elevated blood pressure places the patient at high risk for hemorrhagic or ischemic stroke.",
+    distractors: {
+      NCLEX: "Convulsions may occur but are not the highest immediate risk.",
+      STR: "MI risk exists but stroke risk is higher at this BP.",
+      SAFE_DELAY: "Shock is associated with hypotension."
+    }
+  }
+},
+{
+  q: "50. A patient is diagnosed with meningitis. How should the nurse manage this patient?",
+  options: [
+    { text: "Keep the patient in an isolation room", tag: "STR" },
+    { text: "Use N95 mask at all times", tag: "NCLEX" },
+    { text: "Apply airborne precautions", tag: "SAFE_DELAY" },
+    { text: "Place the patient in a negative pressure room", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Meningitis (especially bacterial) requires isolation in a negative-pressure room with appropriate precautions.",
+    distractors: {
+      STR: "Isolation alone is incomplete.",
+      NCLEX: "N95 is not always required.",
+      SAFE_DELAY: "Meningitis is primarily droplet, not airborne."
+    }
+  }
+},
+{
+  q: "51. A client with ARDS is prescribed CPAP via face mask. What intervention makes this procedure effective?",
+  options: [
+    { text: "Obtain baseline arterial blood gases", tag: "SAFE_DELAY" },
+    { text: "Obtain baseline pulse oximetry levels", tag: "NCLEX" },
+    { text: "Apply the mask with a snug fit", tag: "SCFHS" },
+    { text: "Remove the mask for deep breathing exercises", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "A snug mask fit is required to maintain continuous positive airway pressure.",
+    distractors: {
+      SAFE_DELAY: "Baseline ABGs assess effectiveness, not efficacy.",
+      NCLEX: "Pulse oximetry does not enhance CPAP function.",
+      STR: "Removing the mask defeats CPAP therapy."
+    }
+  }
+},
+{
+  q: "52. A nurse preparing to care for a child with intussusception expects which documented sign?",
+  options: [
+    { text: "Watery diarrhea", tag: "SAFE_DELAY" },
+    { text: "Profuse projectile vomiting", tag: "NCLEX" },
+    { text: "Red jelly stool", tag: "SCFHS" },
+    { text: "Ribbon-like stools", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Currant jelly stools are classic for intussusception.",
+    distractors: {
+      SAFE_DELAY: "Watery diarrhea is nonspecific.",
+      NCLEX: "Projectile vomiting is associated with pyloric stenosis.",
+      STR: "Ribbon stools suggest obstruction, not intussusception."
+    }
+  }
+},
+{
+  q: "53. A newborn's anterior fontanel is soft on palpation. What does this indicate?",
+  options: [
+    { text: "Dehydration", tag: "SAFE_DELAY" },
+    { text: "Increased intracranial pressure", tag: "NCLEX" },
+    { text: "Decreased intracranial pressure", tag: "STR" },
+    { text: "A normal finding", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "A soft, flat anterior fontanel is a normal newborn finding.",
+    distractors: {
+      SAFE_DELAY: "Dehydration causes sunken fontanel.",
+      NCLEX: "ICP causes bulging fontanel.",
+      STR: "Low ICP is not assessed this way."
+    }
+  }
+},
+{
+  q: "54. A client with gestational hypertension is monitored for which major complication?",
+  options: [
+    { text: "Seizures", tag: "SCFHS" },
+    { text: "Hallucinations", tag: "NCLEX" },
+    { text: "Placenta previa", tag: "STR" },
+    { text: "Altered respiratory status", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Gestational hypertension may progress to eclampsia, which includes seizures.",
+    distractors: {
+      NCLEX: "Hallucinations are not typical.",
+      STR: "Placenta previa is unrelated.",
+      SAFE_DELAY: "Respiratory changes are secondary."
+    }
+  }
+},
+{
+  q: "55. A client with head injury exhibits abnormal flexion posturing. How should the nurse document this?",
+  options: [
+    { text: "Flaccidity", tag: "SAFE_DELAY" },
+    { text: "Decorticate posturing", tag: "SCFHS" },
+    { text: "Decerebrate posturing", tag: "NCLEX" },
+    { text: "Rigidity in upper extremities", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Flexion of arms toward the core indicates decorticate posturing.",
+    distractors: {
+      SAFE_DELAY: "Flaccidity indicates no motor response.",
+      NCLEX: "Decerebrate posturing shows extension.",
+      STR: "Rigidity alone is nonspecific."
+    }
+  }
+},
+{
+  q: "56. During Leopold maneuvers, what does the first maneuver assess?",
+  options: [
+    { text: "Fetal descent", tag: "SAFE_DELAY" },
+    { text: "Placenta previa", tag: "STR" },
+    { text: "Fetal lie and presentation", tag: "SCFHS" },
+    { text: "Strength of uterine contractions", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "The first maneuver determines fetal lie and what part occupies the fundus.",
+    distractors: {
+      SAFE_DELAY: "Descent is assessed later.",
+      STR: "Placenta previa requires imaging.",
+      NCLEX: "Contraction strength is not assessed by Leopold maneuvers."
+    }
+  }
+},
+{
+  q: "57. A patient with increased intracranial pressure suddenly develops widening pulse pressure and bradycardia. What does this indicate?",
+  options: [
+    { text: "Hypovolemic shock", tag: "SAFE_DELAY" },
+    { text: "Cushing's triad", tag: "SCFHS" },
+    { text: "Autonomic dysreflexia", tag: "NCLEX" },
+    { text: "Septic shock", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Cushing’s triad consists of widened pulse pressure, bradycardia, and irregular respirations, indicating increased ICP.",
+    distractors: {
+      SAFE_DELAY: "Shock presents with tachycardia.",
+      NCLEX: "Autonomic dysreflexia occurs with spinal cord injury.",
+      STR: "Septic shock presents with fever and hypotension."
+    }
+  }
+},
+{
+  q: "58. A nurse is caring for a patient receiving total parenteral nutrition (TPN). Which complication should be monitored most closely?",
+  options: [
+    { text: "Electrolyte imbalance", tag: "SCFHS" },
+    { text: "Constipation", tag: "STR" },
+    { text: "Fluid deficit", tag: "SAFE_DELAY" },
+    { text: "Hypoxia", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "TPN can cause serious electrolyte imbalances and hyperglycemia.",
+    distractors: {
+      STR: "Constipation is unrelated to TPN.",
+      SAFE_DELAY: "Fluid overload is more common than deficit.",
+      NCLEX: "Hypoxia is not a direct complication."
+    }
+  }
+},
+{
+  q: "59. A postoperative patient suddenly develops dyspnea, chest pain, and tachycardia. What is the nurse’s PRIORITY action?",
+  options: [
+    { text: "Encourage coughing and deep breathing", tag: "STR" },
+    { text: "Administer prescribed analgesics", tag: "SAFE_DELAY" },
+    { text: "Assess oxygen saturation", tag: "NCLEX" },
+    { text: "Suspect pulmonary embolism and notify provider", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "These are classic signs of pulmonary embolism requiring immediate medical intervention.",
+    distractors: {
+      STR: "Coughing will not resolve PE.",
+      SAFE_DELAY: "Pain management delays treatment.",
+      NCLEX: "Assessment is important but notification is priority."
+    }
+  }
+},
+{
+  q: "60. A client with Addison’s disease is at risk for which electrolyte imbalance?",
+  options: [
+    { text: "Hypernatremia", tag: "SAFE_DELAY" },
+    { text: "Hypokalemia", tag: "NCLEX" },
+    { text: "Hyperkalemia", tag: "SCFHS" },
+    { text: "Hypercalcemia", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Addison’s disease causes aldosterone deficiency leading to sodium loss and potassium retention.",
+    distractors: {
+      SAFE_DELAY: "Sodium levels are decreased, not increased.",
+      NCLEX: "Potassium increases, not decreases.",
+      STR: "Calcium is unaffected."
+    }
+  }
+},
+{
+  q: "61. A nurse is caring for a patient with a chest tube. Continuous bubbling in the water-seal chamber indicates?",
+  options: [
+    { text: "Normal function", tag: "SAFE_DELAY" },
+    { text: "An air leak", tag: "SCFHS" },
+    { text: "Increased intrapleural pressure", tag: "STR" },
+    { text: "Tube obstruction", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Continuous bubbling in the water-seal chamber indicates an air leak.",
+    distractors: {
+      SAFE_DELAY: "Normal bubbling occurs only in suction chamber.",
+      STR: "Pressure changes do not cause continuous bubbling.",
+      NCLEX: "Obstruction causes absent fluctuations."
+    }
+  }
+},
+{
+  q: "62. A client with diabetes insipidus is expected to exhibit which symptom?",
+  options: [
+    { text: "Oliguria", tag: "SAFE_DELAY" },
+    { text: "Concentrated urine", tag: "STR" },
+    { text: "Polyuria", tag: "SCFHS" },
+    { text: "Hyponatremia", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Diabetes insipidus causes excessive dilute urine output (polyuria).",
+    distractors: {
+      SAFE_DELAY: "Urine output is increased, not decreased.",
+      STR: "Urine is dilute, not concentrated.",
+      NCLEX: "Sodium levels are usually elevated."
+    }
+  }
+},
+{
+  q: "63. A nurse is administering digoxin. Which finding requires withholding the medication?",
+  options: [
+    { text: "Apical pulse of 52 bpm", tag: "SCFHS" },
+    { text: "Blood pressure 130/80 mmHg", tag: "STR" },
+    { text: "Respiratory rate 20/min", tag: "SAFE_DELAY" },
+    { text: "Serum potassium 4.2 mEq/L", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Digoxin should be withheld if the apical pulse is below 60 bpm.",
+    distractors: {
+      STR: "Blood pressure is normal.",
+      SAFE_DELAY: "Respiratory rate is normal.",
+      NCLEX: "Potassium is within normal range."
+    }
+  }
+},
+{
+  q: "64. A nurse assesses a postoperative client with absent bowel sounds. What is the most appropriate nursing action?",
+  options: [
+    { text: "Administer laxatives", tag: "SAFE_DELAY" },
+    { text: "Notify the physician immediately", tag: "STR" },
+    { text: "Continue to monitor and maintain NPO status", tag: "SCFHS" },
+    { text: "Encourage oral fluid intake", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Absent bowel sounds postoperatively indicate ileus; NPO and monitoring are appropriate.",
+    distractors: {
+      SAFE_DELAY: "Laxatives worsen ileus.",
+      STR: "This is an expected postoperative finding initially.",
+      NCLEX: "Oral intake increases risk of vomiting."
+    }
+  }
+},
+{
+  q: "65. A nurse is caring for a patient with suspected meningitis. Which action is the PRIORITY before performing a lumbar puncture?",
+  options: [
+    { text: "Administer analgesics", tag: "SAFE_DELAY" },
+    { text: "Obtain a CT scan of the head", tag: "SCFHS" },
+    { text: "Encourage oral fluids", tag: "STR" },
+    { text: "Place patient in lateral position", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "A CT scan is required to rule out increased intracranial pressure before lumbar puncture.",
+    distractors: {
+      SAFE_DELAY: "Analgesics do not prevent herniation.",
+      STR: "Fluids are not priority before LP.",
+      NCLEX: "Positioning occurs during the procedure."
+    }
+  }
+},
+{
+  q: "66. A client receiving heparin therapy should be monitored using which laboratory test?",
+  options: [
+    { text: "INR", tag: "STR" },
+    { text: "Platelet count", tag: "SAFE_DELAY" },
+    { text: "aPTT", tag: "SCFHS" },
+    { text: "Prothrombin time", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Heparin therapy is monitored using activated partial thromboplastin time (aPTT).",
+    distractors: {
+      STR: "INR is used for warfarin.",
+      SAFE_DELAY: "Platelets monitor HIT, not therapeutic level.",
+      NCLEX: "PT monitors warfarin."
+    }
+  }
+},
+{
+  q: "67. A patient with a spinal cord injury above T6 suddenly develops severe hypertension and headache. What is the nurse’s FIRST action?",
+  options: [
+    { text: "Administer antihypertensive medication", tag: "SAFE_DELAY" },
+    { text: "Sit the patient upright", tag: "SCFHS" },
+    { text: "Notify the physician", tag: "STR" },
+    { text: "Assess neurological status", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Autonomic dysreflexia requires immediate upright positioning to reduce blood pressure.",
+    distractors: {
+      SAFE_DELAY: "Medication is secondary after positioning.",
+      STR: "Provider notification follows emergency interventions.",
+      NCLEX: "Assessment should not delay treatment."
+    }
+  }
+},
+{
+  q: "68. A client receiving total parenteral nutrition (TPN) develops sudden dyspnea and chest pain. What complication does the nurse suspect?",
+  options: [
+    { text: "Fluid overload", tag: "STR" },
+    { text: "Catheter-related sepsis", tag: "SAFE_DELAY" },
+    { text: "Air embolism", tag: "SCFHS" },
+    { text: "Hyperglycemia", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Sudden dyspnea and chest pain during TPN strongly indicate air embolism.",
+    distractors: {
+      STR: "Fluid overload develops gradually with edema.",
+      SAFE_DELAY: "Sepsis presents with fever and chills.",
+      NCLEX: "Hyperglycemia does not cause acute chest pain."
+    }
+  }
+},
+
+];
+
+// ================= ENGINE =================
+let shuffledQuestions = [];
+let currentIndex = 0;
+let selectedIndex = null;
+
+let score = { SCFHS:0, NCLEX:0, STR:0, SAFE_DELAY:0 };
+
+// ================= TIMER =================
+let totalTime = 20 * 60; // 20 minutes
+let timeLeft = totalTime;
+let timerInterval = null;
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function startExam() {
+  if (!candidateName.value.trim() || !candidateID.value.trim()) {
+    alert("Enter Name and ID");
+    return;
+  }
+
+  shuffledQuestions = shuffle(questions).map(q => ({
+    ...q,
+    options: shuffle(q.options)
+  }));
+
+  startScreen.classList.add("hidden");
+  examScreen.classList.remove("hidden");
+
+  startTimer();
+  loadQuestion();
+}
+
+function loadQuestion() {
+  selectedIndex = null;
+  rationaleBox.classList.add("hidden");
+  nextBtn.classList.add("hidden");
+
+  const q = shuffledQuestions[currentIndex];
+  qCounter.innerText = `Question ${currentIndex + 1} of ${shuffledQuestions.length}`;
+  questionText.innerText = q.q;
+
+  options.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const div = document.createElement("div");
+    div.className = "option";
+    div.innerText = opt.text;
+    div.onclick = () => selectOption(div, i);
+    options.appendChild(div);
+  });
+}
+
+function selectOption(div, index) {
+  document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+  div.classList.add("selected");
+  selectedIndex = index;
+}
+
+function submitAnswer() {
+  if (selectedIndex === null) {
+    alert("Select an option");
+    return;
+  }
+
+  const q = shuffledQuestions[currentIndex];
+  const chosen = q.options[selectedIndex];
+  const isCorrect = chosen.tag === q.correctTag;
+
+  score[chosen.tag]++;
+
+  document.querySelectorAll(".option").forEach((o, i) => {
+    if (q.options[i].tag === q.correctTag) o.classList.add("correct");
+    if (i === selectedIndex && !isCorrect) o.classList.add("wrong");
+  });
+
+  rationaleBox.classList.remove("hidden");
+  rationaleBox.innerHTML = isCorrect
+    ? `<b>Correct.</b><br><br>${q.rationale.correct}`
+    : `<b>Incorrect.</b><br><br>${q.rationale.distractors[chosen.tag]}
+       <hr><b>Correct Rationale:</b><br>${q.rationale.correct}`;
+
+  nextBtn.classList.remove("hidden");
+}
+
+function nextQuestion() {
+  currentIndex++;
+  currentIndex < shuffledQuestions.length ? loadQuestion() : showResult();
+}
+
+function startTimer() {
+  updateTimer();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      autoEndExam();
+    }
+    updateTimer();
+  }, 1000);
+}
+
+function updateTimer() {
+  const min = Math.floor(timeLeft / 60);
+  const sec = timeLeft % 60;
+  timer.innerText = `Time Remaining: ${min}:${sec.toString().padStart(2,"0")}`;
+}
+
+function autoEndExam() {
+  if (selectedIndex !== null) submitAnswer();
+  setTimeout(showResult, 600);
+}
+
+function showResult() {
+  clearInterval(timerInterval);
+
+  examScreen.classList.add("hidden");
+  resultScreen.classList.remove("hidden");
+
+  const decision =
+    score.SCFHS >= score.NCLEX && score.SCFHS >= score.STR
+      ? "🟢 GO — SCFHS Ready"
+      : "🔴 NO-GO — Not SCFHS Ready";
+
+  finalReport.innerHTML = `
+    <b>Decision:</b> ${decision}<br><br>
+    <b>SCFHS Alignment:</b> ${score.SCFHS}<br>
+    <b>NCLEX Bias:</b> ${score.NCLEX}<br>
+    <b>STR Bias:</b> ${score.STR}<br><br>
+    <b>Examiner Interpretation:</b><br>
+    ${decision.includes("GO")
+      ? "Consistent prioritization aligned with SCFHS Prometric expectations."
+      : "Delayed or escalation-biased decision-making inconsistent with SCFHS standards."}
+  `;
+}
+</script>
+
+</body>
+</html>
