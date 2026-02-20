@@ -77,7 +77,7 @@ input, button {
 <!-- EXAM SCREEN -->
 <div id="examScreen" class="hidden">
   <h2 id="qCounter"></h2>
-  <div id="timer">Time Remaining: 20:00</div>
+  <div id="timer">Time Remaining: 120:00</div>
   <p id="questionText"></p>
   <div id="options"></div>
 
@@ -1412,7 +1412,582 @@ const questions = [
     }
   }
 },
-
+{
+  q: "69. A nurse is caring for a client with Addison’s disease. Which laboratory finding is expected?",
+  options: [
+    { text: "Hypernatremia", tag: "NCLEX" },
+    { text: "Hypokalemia", tag: "STR" },
+    { text: "Hyponatremia", tag: "SCFHS" },
+    { text: "Hyperglycemia", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Addison’s disease causes sodium loss leading to hyponatremia.",
+    distractors: {
+      NCLEX: "Sodium is decreased, not increased.",
+      STR: "Potassium is elevated, not decreased.",
+      SAFE_DELAY: "Hypoglycemia is more common."
+    }
+  }
+},
+{
+  q: "70. A client with increased intracranial pressure should be positioned in which way?",
+  options: [
+    { text: "Flat and supine", tag: "SAFE_DELAY" },
+    { text: "Trendelenburg position", tag: "STR" },
+    { text: "Head of bed elevated 30 degrees", tag: "SCFHS" },
+    { text: "Side-lying with knees flexed", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Elevating the head promotes venous drainage and decreases ICP.",
+    distractors: {
+      SAFE_DELAY: "Flat positioning increases ICP.",
+      STR: "Trendelenburg worsens cerebral pressure.",
+      NCLEX: "Does not optimize venous return."
+    }
+  }
+},
+{
+  q: "71. A nurse is preparing to administer digoxin. Which finding would require the nurse to withhold the medication?",
+  options: [
+    { text: "Apical pulse of 58 bpm", tag: "SCFHS" },
+    { text: "Blood pressure 140/90 mmHg", tag: "SAFE_DELAY" },
+    { text: "Respiratory rate of 18", tag: "STR" },
+    { text: "Serum potassium of 4.2 mEq/L", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Digoxin should be withheld if apical pulse is below 60 bpm.",
+    distractors: {
+      SAFE_DELAY: "Blood pressure is not a contraindication.",
+      STR: "Respiratory rate is normal.",
+      NCLEX: "Potassium level is normal."
+    }
+  }
+},
+{
+  q: "72. A client with hypoglycemia is conscious and alert. What is the nurse’s FIRST action?",
+  options: [
+    { text: "Administer IV dextrose", tag: "STR" },
+    { text: "Provide 15 grams of fast-acting carbohydrate", tag: "SCFHS" },
+    { text: "Notify the physician", tag: "SAFE_DELAY" },
+    { text: "Check urine ketones", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Conscious hypoglycemia is treated with oral fast-acting carbohydrates.",
+    distractors: {
+      STR: "IV dextrose is for unconscious patients.",
+      SAFE_DELAY: "Treatment should not be delayed.",
+      NCLEX: "Ketone testing is not priority."
+    }
+  }
+},
+{
+  q: "73. A nurse is caring for a client with tuberculosis. Which precaution is required?",
+  options: [
+    { text: "Contact precautions", tag: "SAFE_DELAY" },
+    { text: "Droplet precautions", tag: "STR" },
+    { text: "Airborne precautions", tag: "SCFHS" },
+    { text: "Standard precautions only", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Tuberculosis requires airborne isolation with an N95 mask.",
+    distractors: {
+      SAFE_DELAY: "Contact precautions are insufficient.",
+      STR: "Droplet precautions do not fully protect.",
+      NCLEX: "Standard precautions alone are inadequate."
+    }
+  }
+},
+{
+  q: "74. A client with chronic renal failure is prescribed aluminum hydroxide. The nurse understands this medication is given to:",
+  options: [
+    { text: "Lower serum potassium levels", tag: "STR" },
+    { text: "Bind dietary phosphorus", tag: "SCFHS" },
+    { text: "Increase calcium absorption", tag: "NCLEX" },
+    { text: "Correct metabolic acidosis", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Aluminum hydroxide binds phosphorus in the gut, preventing absorption.",
+    distractors: {
+      STR: "Potassium is not affected by aluminum hydroxide.",
+      NCLEX: "It does not increase calcium absorption.",
+      SAFE_DELAY: "It does not treat metabolic acidosis."
+    }
+  }
+},
+{
+  q: "75. A nurse is caring for a client with myasthenia gravis. Which assessment finding indicates a myasthenic crisis?",
+  options: [
+    { text: "Muscle weakness that improves with rest", tag: "NCLEX" },
+    { text: "Sudden respiratory distress", tag: "SCFHS" },
+    { text: "Hypertension and tachycardia", tag: "STR" },
+    { text: "Increased salivation", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Myasthenic crisis causes severe muscle weakness leading to respiratory failure.",
+    distractors: {
+      NCLEX: "Improvement with rest is expected in stable disease.",
+      STR: "Vital sign changes are not defining features.",
+      SAFE_DELAY: "Salivation is more associated with cholinergic crisis."
+    }
+  }
+},
+{
+  q: "76. A postoperative client suddenly develops shortness of breath, chest pain, and tachycardia. The nurse suspects:",
+  options: [
+    { text: "Atelectasis", tag: "STR" },
+    { text: "Pulmonary embolism", tag: "SCFHS" },
+    { text: "Pneumonia", tag: "NCLEX" },
+    { text: "Fluid overload", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Sudden onset dyspnea, chest pain, and tachycardia are classic signs of pulmonary embolism.",
+    distractors: {
+      STR: "Atelectasis usually causes gradual hypoxia.",
+      NCLEX: "Pneumonia develops more slowly.",
+      SAFE_DELAY: "Fluid overload presents with crackles and edema."
+    }
+  }
+},
+{
+  q: "77. A nurse is teaching a client with iron-deficiency anemia about iron supplements. Which instruction is correct?",
+  options: [
+    { text: "Take iron with milk", tag: "STR" },
+    { text: "Take iron with orange juice", tag: "SCFHS" },
+    { text: "Take iron at bedtime only", tag: "SAFE_DELAY" },
+    { text: "Stop iron when stools darken", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Vitamin C enhances iron absorption.",
+    distractors: {
+      STR: "Milk decreases iron absorption.",
+      SAFE_DELAY: "Timing alone does not optimize absorption.",
+      NCLEX: "Dark stools are an expected effect."
+    }
+  }
+},
+{
+  q: "78. A 32 weeks’ pregnant patient presents for her follow-up appointment in the antenatal clinic. She complains of experiencing frequent heartburn. Which of the following is the most appropriate advice to the patient?",
+  options: [
+    { text: "Drink plain water between meals", tag: "SAFE_DELAY" },
+    { text: "Raise head of the bed", tag: "SCFHS" },
+    { text: "Eat favourite foods", tag: "STR" },
+    { text: "Lie down for one hour after taking food", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Raising the head of the bed helps reduce gastroesophageal reflux by preventing gastric contents from moving upward, which is common in late pregnancy.",
+    distractors: {
+      SAFE_DELAY: "Fluids between meals may help but are not the most effective intervention.",
+      STR: "Eating favorite foods does not address heartburn and may worsen symptoms.",
+      NCLEX: "Lying down after meals increases reflux and worsens heartburn."
+    }
+  }
+},
+{
+  q: "79. A client with cirrhosis develops ascites. Which diet instruction is most important?",
+  options: [
+    { text: "Increase protein intake", tag: "NCLEX" },
+    { text: "Restrict sodium intake", tag: "SCFHS" },
+    { text: "Increase fluid intake", tag: "STR" },
+    { text: "Avoid carbohydrates", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Sodium restriction helps reduce fluid retention and ascites.",
+    distractors: {
+      NCLEX: "Protein may be limited depending on encephalopathy.",
+      STR: "Fluid restriction alone is insufficient.",
+      SAFE_DELAY: "Carbohydrates are not restricted."
+    }
+  }
+},
+{
+  q: "80. A nurse is caring for a client with increased intracranial pressure. Which finding requires immediate intervention?",
+  options: [
+    { text: "Headache", tag: "STR" },
+    { text: "Vomiting without nausea", tag: "SCFHS" },
+    { text: "Photophobia", tag: "NCLEX" },
+    { text: "Restlessness", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Projectile vomiting without nausea indicates worsening intracranial pressure.",
+    distractors: {
+      STR: "Headache is common but not immediately life-threatening.",
+      NCLEX: "Photophobia is not critical.",
+      SAFE_DELAY: "Restlessness may occur but is less specific."
+    }
+  }
+},
+{
+  q: "81. A client with diabetes reports shakiness, sweating, and confusion. What is the nurse’s FIRST action?",
+  options: [
+    { text: "Administer insulin", tag: "STR" },
+    { text: "Check blood glucose level", tag: "SCFHS" },
+    { text: "Notify the physician", tag: "SAFE_DELAY" },
+    { text: "Administer glucagon", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Symptoms suggest hypoglycemia; blood glucose must be checked immediately.",
+    distractors: {
+      STR: "Insulin would worsen hypoglycemia.",
+      SAFE_DELAY: "Physician notification follows assessment.",
+      NCLEX: "Glucagon is given after confirmation or if unconscious."
+    }
+  }
+},
+{
+  q: "82. A nurse is caring for a client with acute pancreatitis. Which laboratory value should the nurse expect to be elevated?",
+  options: [
+    { text: "Amylase", tag: "SCFHS" },
+    { text: "Calcium", tag: "STR" },
+    { text: "Potassium", tag: "SAFE_DELAY" },
+    { text: "Hemoglobin", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Amylase levels rise in acute pancreatitis due to pancreatic inflammation.",
+    distractors: {
+      STR: "Calcium levels typically decrease.",
+      SAFE_DELAY: "Potassium changes are secondary.",
+      NCLEX: "Hemoglobin is not specific to pancreatitis."
+    }
+  }
+},
+{
+  q: "83. A postoperative client reports severe calf pain and swelling. What is the nurse’s priority action?",
+  options: [
+    { text: "Massage the calf", tag: "STR" },
+    { text: "Apply warm compresses", tag: "SAFE_DELAY" },
+    { text: "Notify the physician", tag: "SCFHS" },
+    { text: "Encourage ambulation", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Symptoms suggest deep vein thrombosis; physician must be notified immediately.",
+    distractors: {
+      STR: "Massage can dislodge a clot.",
+      SAFE_DELAY: "Heat is contraindicated.",
+      NCLEX: "Ambulation may worsen the condition."
+    }
+  }
+},
+{
+  q: "84. A client with chronic obstructive pulmonary disease is receiving oxygen therapy. Which finding indicates oxygen toxicity?",
+  options: [
+    { text: "Decreased respiratory rate", tag: "STR" },
+    { text: "Dry cough and substernal pain", tag: "SCFHS" },
+    { text: "Improved oxygen saturation", tag: "NCLEX" },
+    { text: "Barrel chest", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Dry cough and substernal chest pain are early signs of oxygen toxicity.",
+    distractors: {
+      STR: "Respiratory rate changes are nonspecific.",
+      NCLEX: "Improved saturation is expected.",
+      SAFE_DELAY: "Barrel chest is a chronic finding."
+    }
+  }
+},
+{
+  q: "85. A nurse is caring for a client receiving digoxin. Which finding indicates digoxin toxicity?",
+  options: [
+    { text: "Blurred or yellow vision", tag: "SCFHS" },
+    { text: "Hypertension", tag: "STR" },
+    { text: "Increased appetite", tag: "SAFE_DELAY" },
+    { text: "Hyperactivity", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Visual disturbances, especially yellow vision, are classic signs of digoxin toxicity.",
+    distractors: {
+      STR: "Blood pressure changes are not specific.",
+      SAFE_DELAY: "Appetite changes are not typical.",
+      NCLEX: "Hyperactivity is unrelated."
+    }
+  }
+},
+{
+  q: "86. A client with increased intracranial pressure suddenly develops bradycardia and widening pulse pressure. What should the nurse do FIRST?",
+  options: [
+    { text: "Document the findings", tag: "SAFE_DELAY" },
+    { text: "Notify the physician immediately", tag: "SCFHS" },
+    { text: "Administer pain medication", tag: "STR" },
+    { text: "Reposition the client flat", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Bradycardia and widening pulse pressure indicate Cushing’s triad and impending herniation.",
+    distractors: {
+      SAFE_DELAY: "Documentation delays life-saving intervention.",
+      STR: "Pain medication does not treat increased ICP.",
+      NCLEX: "Flat positioning worsens intracranial pressure."
+    }
+  }
+},
+{
+  q: "87. A nurse is caring for a client receiving total parenteral nutrition (TPN). Which assessment finding requires immediate intervention?",
+  options: [
+    { text: "Blood glucose of 280 mg/dL", tag: "SCFHS" },
+    { text: "Weight gain of 1 kg in one week", tag: "SAFE_DELAY" },
+    { text: "Mild edema of ankles", tag: "STR" },
+    { text: "Warmth at IV insertion site", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "TPN is high in glucose and can cause severe hyperglycemia requiring immediate correction.",
+    distractors: {
+      SAFE_DELAY: "Gradual weight gain is expected.",
+      STR: "Mild edema may occur with fluid shifts.",
+      NCLEX: "Warmth alone does not indicate complication."
+    }
+  }
+},
+{
+  q: "88. A client is scheduled for a barium swallow study. Which instruction should the nurse provide?",
+  options: [
+    { text: "Eat a light breakfast before the test", tag: "STR" },
+    { text: "Increase fluids after the procedure", tag: "SCFHS" },
+    { text: "Expect urine discoloration", tag: "SAFE_DELAY" },
+    { text: "Avoid ambulation for 24 hours", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Increased fluids help prevent constipation caused by barium.",
+    distractors: {
+      STR: "Clients must remain NPO before a barium swallow.",
+      SAFE_DELAY: "Urine discoloration occurs with IV contrast, not barium.",
+      NCLEX: "Ambulation is encouraged, not restricted."
+    }
+  }
+},
+{
+  q: "89. A nurse is caring for a client with a chest tube connected to a water-seal drainage system. Which observation indicates the system is functioning properly?",
+  options: [
+    { text: "Continuous bubbling in the water-seal chamber", tag: "STR" },
+    { text: "Tidaling in the water-seal chamber", tag: "SCFHS" },
+    { text: "Drainage tubing clamped continuously", tag: "NCLEX" },
+    { text: "No fluctuation in the drainage system", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Tidaling reflects normal pressure changes during respiration.",
+    distractors: {
+      STR: "Continuous bubbling indicates an air leak.",
+      NCLEX: "Clamping prevents air escape and can cause tension pneumothorax.",
+      SAFE_DELAY: "Absence of fluctuation may indicate obstruction."
+    }
+  }
+},
+{
+  q: "90. A postoperative client suddenly reports shortness of breath and chest pain. Which action should the nurse take FIRST?",
+  options: [
+    { text: "Administer prescribed analgesics", tag: "SAFE_DELAY" },
+    { text: "Assess oxygen saturation", tag: "SCFHS" },
+    { text: "Encourage deep breathing", tag: "STR" },
+    { text: "Document the symptoms", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Shortness of breath and chest pain may indicate pulmonary embolism and require rapid assessment.",
+    distractors: {
+      SAFE_DELAY: "Pain relief does not address the underlying cause.",
+      STR: "Deep breathing is inappropriate until the cause is identified.",
+      NCLEX: "Documentation is not the priority in acute changes."
+    }
+  }
+},
+{
+  q: "91. A nurse is assigned to care for a patient on oxygen. The nurse checks the oxygen concentration using a pulse oximeter. Which of the following readings indicates that the patient has adequate oxygenation?",
+  options: [
+    { text: "Less than 90%", tag: "STR" },
+    { text: "91%–92%", tag: "SAFE_DELAY" },
+    { text: "93%–94%", tag: "NCLEX" },
+    { text: "95% and above", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "An oxygen saturation of 95% or higher indicates adequate oxygenation in most adult patients.",
+    distractors: {
+      STR: "Values below 90% indicate hypoxemia.",
+      SAFE_DELAY: "91–92% is borderline and may require intervention.",
+      NCLEX: "93–94% is acceptable but not optimal."
+    }
+  }
+},
+{
+  q: "92. A nurse is assessing a postoperative client who received spinal anesthesia. Which finding requires immediate nursing intervention?",
+  options: [
+    { text: "Blood pressure 86/48 mmHg", tag: "SCFHS" },
+    { text: "Urinary retention", tag: "STR" },
+    { text: "Mild nausea", tag: "SAFE_DELAY" },
+    { text: "Headache when upright", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Hypotension is a serious complication of spinal anesthesia and requires immediate action.",
+    distractors: {
+      STR: "Urinary retention is expected after spinal anesthesia.",
+      SAFE_DELAY: "Mild nausea is common postoperatively.",
+      NCLEX: "Post-dural puncture headache occurs later."
+    }
+  }
+},
+{
+  q: "93. A nurse is caring for a client receiving morphine sulfate IV. Which finding indicates an adverse effect?",
+  options: [
+    { text: "Respiratory rate of 10/min", tag: "SCFHS" },
+    { text: "Blood pressure 118/72 mmHg", tag: "SAFE_DELAY" },
+    { text: "Pain score 2/10", tag: "STR" },
+    { text: "Warm, dry skin", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Respiratory depression is a serious adverse effect of opioid administration.",
+    distractors: {
+      SAFE_DELAY: "Normal blood pressure is expected.",
+      STR: "Low pain score indicates effectiveness.",
+      NCLEX: "Warm, dry skin is not an opioid complication."
+    }
+  }
+},
+{
+  q: "94. A client is admitted with diabetic ketoacidosis (DKA). Which laboratory finding does the nurse expect?",
+  options: [
+    { text: "Blood glucose 520 mg/dL", tag: "SCFHS" },
+    { text: "pH 7.48", tag: "STR" },
+    { text: "Serum potassium 2.8 mEq/L", tag: "SAFE_DELAY" },
+    { text: "Bicarbonate 28 mEq/L", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "DKA is characterized by severe hyperglycemia.",
+    distractors: {
+      STR: "DKA causes metabolic acidosis, not alkalosis.",
+      SAFE_DELAY: "Potassium may appear normal or elevated initially.",
+      NCLEX: "Bicarbonate is decreased in DKA."
+    }
+  }
+},
+{
+  q: "95. A nurse is teaching a client about prevention of deep vein thrombosis (DVT). Which statement indicates correct understanding?",
+  options: [
+    { text: "I will avoid walking after surgery", tag: "STR" },
+    { text: "I will perform leg exercises regularly", tag: "SCFHS" },
+    { text: "I will keep my legs crossed when resting", tag: "NCLEX" },
+    { text: "I will limit fluid intake", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Leg exercises promote venous return and reduce DVT risk.",
+    distractors: {
+      STR: "Early ambulation is encouraged.",
+      NCLEX: "Crossing legs increases venous stasis.",
+      SAFE_DELAY: "Adequate hydration is necessary."
+    }
+  }
+},
+{
+  q: "96. Which of the following types of IV fluid is considered hypertonic?",
+  options: [
+    { text: "0.33% NaCl solution", tag: "SAFE_DELAY" },
+    { text: "5% NaCl solution", tag: "SCFHS" },
+    { text: "Ringer's lactate solution", tag: "NCLEX" },
+    { text: "Ringer's solution", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "5% NaCl is a hypertonic solution that draws fluid out of cells into the intravascular space.",
+    distractors: {
+      SAFE_DELAY: "0.33% NaCl is hypotonic.",
+      NCLEX: "Ringer's lactate is isotonic.",
+      STR: "Ringer's solution is isotonic."
+    }
+  }
+},
+{
+  q: "97. A 56-year-old man with a history of COPD is complaining of chest pain, shortness of breath, lethargy, fever, and productive cough. Crackles are heard in the lower lobes. BP 110/70, HR 111, RR 18, Temp 37.4°C, SpO₂ 90%. Which position is most appropriate?",
+  options: [
+    { text: "Prone", tag: "SAFE_DELAY" },
+    { text: "Supine", tag: "STR" },
+    { text: "High Fowler's position", tag: "SCFHS" },
+    { text: "Trendelenburg", tag: "NCLEX" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "High Fowler’s position maximizes lung expansion and improves oxygenation in clients with respiratory distress.",
+    distractors: {
+      SAFE_DELAY: "Prone positioning is not first-line for acute respiratory distress in this setting.",
+      STR: "Supine position can worsen dyspnea.",
+      NCLEX: "Trendelenburg impairs respiratory function."
+    }
+  }
+},
+{
+  q: "98. An older adult client has been identified as a victim of psychological abuse. Which action by the nurse is the PRIORITY intervention?",
+  options: [
+    { text: "Removing the client from any situation that presents immediate danger", tag: "SCFHS" },
+    { text: "Obtaining mental health treatment for the client", tag: "NCLEX" },
+    { text: "Adhering to federal mandatory abuse reporting laws", tag: "STR" },
+    { text: "Notifying the case worker to intervene in the family situation", tag: "SAFE_DELAY" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Client safety is always the first priority; immediate danger must be addressed before reporting or referrals.",
+    distractors: {
+      NCLEX: "Mental health care is important but not immediate priority.",
+      STR: "Reporting is required but follows ensuring safety.",
+      SAFE_DELAY: "Case worker involvement comes after safety is secured."
+    }
+  }
+},
+{
+  q: "99. Which site is most appropriate to measure the temperature of a client with heart disease who ate hot soup 45 minutes ago?",
+  options: [
+    { text: "Axillary", tag: "SCFHS" },
+    { text: "Popliteal", tag: "SAFE_DELAY" },
+    { text: "Rectal", tag: "NCLEX" },
+    { text: "Oral", tag: "STR" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "Axillary temperature avoids stimulation of the vagus nerve and is safe after recent oral intake.",
+    distractors: {
+      SAFE_DELAY: "Popliteal is not commonly used for temperature measurement.",
+      NCLEX: "Rectal temperatures can stimulate the vagus nerve.",
+      STR: "Oral readings are inaccurate after eating."
+    }
+  }
+},
+{
+  q: "100. A patient is starting total parenteral nutrition (TPN). It should be started gradually to prevent which complication?",
+  options: [
+    { text: "Hyperinsulinemia", tag: "SAFE_DELAY" },
+    { text: "Hypoglycemia", tag: "STR" },
+    { text: "Hypoinsulinemia", tag: "NCLEX" },
+    { text: "Hyperglycemia", tag: "SCFHS" }
+  ],
+  correctTag: "SCFHS",
+  rationale: {
+    correct: "TPN contains high glucose concentrations; starting it too rapidly can cause hyperglycemia.",
+    distractors: {
+      SAFE_DELAY: "Hyperinsulinemia is not the primary concern.",
+      STR: "Hypoglycemia occurs if TPN is stopped abruptly, not started.",
+      NCLEX: "Hypoinsulinemia is not related to TPN initiation."
+    }
+  }
+}
 ];
 
 // ================= ENGINE =================
@@ -1423,7 +1998,7 @@ let selectedIndex = null;
 let score = { SCFHS:0, NCLEX:0, STR:0, SAFE_DELAY:0 };
 
 // ================= TIMER =================
-let totalTime = 20 * 60; // 20 minutes
+let totalTime = 120 * 60; // 120 minutes
 let timeLeft = totalTime;
 let timerInterval = null;
 
